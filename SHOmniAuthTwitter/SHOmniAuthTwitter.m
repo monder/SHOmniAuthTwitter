@@ -43,7 +43,15 @@
           if(account == nil)[self performLoginForNewAccount:completionBlock];
           else [self performReverseAuthForAccount:account withBlock:completionBlock];
         }
-        else completionBlock(nil, nil, error, granted);
+        // Access not granted
+        else if (!granted) {
+            NSError *responseError = [NSError errorWithDomain:kOmniAuthTwitterErrorDomainAccessNotGranted code:kOmniAuthTwitterErrorCodeAccessNotGranted userInfo:@{NSLocalizedDescriptionKey : @"To use your Twitter account with this app, open Settings > Twitter and make sure this app is turned on."}];
+            completionBlock(nil, nil, responseError, granted);
+        }
+        // Other error
+        else {
+            completionBlock(nil, nil, error, granted);
+        }
       });
     });
   }];
