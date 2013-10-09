@@ -38,7 +38,9 @@
       accountPickerBlock([accountStore accountsWithAccountType:accountType], ^(id<account> theChosenAccount) {
         if (granted
             // No account, we should attempt to create one with performLoginForNewAccount
-            || ([error.domain isEqualToString:ACErrorDomain] && error.code == 6 && theChosenAccount == nil)) {
+            || ([error.domain isEqualToString:ACErrorDomain] && error.code == 6 && theChosenAccount == nil)
+            // Access not granted, no account, we should attempt to create one (or login otherwise) with performLoginForNewAccount
+            || (!granted && theChosenAccount == nil)) {
           ACAccount * account = (ACAccount *)theChosenAccount;
           if(account == nil)[self performLoginForNewAccount:completionBlock];
           else [self performReverseAuthForAccount:account withBlock:completionBlock];
