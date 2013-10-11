@@ -42,7 +42,7 @@
             // Access not granted, no account, we should attempt to create one (or login otherwise) with performLoginForNewAccount
             || (!granted && theChosenAccount == nil)) {
           ACAccount * account = (ACAccount *)theChosenAccount;
-          if(account == nil)[self performLoginForNewAccount:completionBlock];
+          if(account == nil)[self performLoginForNewAccount:completionBlock granted:granted];
           else [self performReverseAuthForAccount:account withBlock:completionBlock];
         }
         // Access not granted
@@ -61,7 +61,7 @@
   
 }
 
-+(void)performLoginForNewAccount:(SHOmniAuthAccountResponseHandler)completionBlock; {
++(void)performLoginForNewAccount:(SHOmniAuthAccountResponseHandler)completionBlock granted: (BOOL) granted {
   
   
   
@@ -82,27 +82,25 @@
                                                    scope:[SHOmniAuth
                                                           providerValue:SHOmniAuthProviderValueScope
                                                           forProvider:self.provider]
-                                                 success:^(AFOAuth1Token *accessToken, id responseObject) {
-                                                   
-                                                   [self saveTwitterAccountWithToken:accessToken.key andSecret:accessToken.secret
-                                                               withCompletionHandler:^(ACAccount *account, NSError *error) {
-                                                                 if(account)
-                                                                   [self performReverseAuthForAccount:account withBlock:completionBlock];
-                                                                 else
-                                                                   completionBlock(nil, nil, error, NO);
-                                                                 
-                                                                 
-                                                                 
-                                                               }];
-                                                   
+                                                success:^(AFOAuth1Token *accessToken, id responseObject) {
+                                                    if (granted) {
+                                                        [self saveTwitterAccountWithToken:accessToken.key andSecret:accessToken.secret
+                                                        withCompletionHandler:^(ACAccount *account, NSError *error) {
+                                                            if(account) {
+                                                                [self performReverseAuthForAccount:account withBlock:completionBlock];
+                                                            }
+                                                            else {
+                                                                completionBlock(nil, nil, error, NO);
+                                                            }
+                                                        }];
+                                                    }
+                                                    else {
+                                                        completionBlock(nil, responseObject, nil, YES);
+                                                    }
                                                  } failure:^(NSError *error) {
                                                    completionBlock(nil, nil, error, NO);
                                                  }];
-  
 }
-
-
-
 
 +(BOOL)hasLocalAccountOnDevice; {
   return [TWAPIManager isLocalTwitterAccountAvailable];
@@ -118,7 +116,6 @@
   ACAccountType  * accountType   = [accountStore accountTypeWithAccountTypeIdentifier:self.accountTypeIdentifier];
   theAccount.accountType = accountType; // Apple SDK bug - accountType isn't retained.
   [TWAPIManager performReverseAuthForAccount:theAccount withHandler:^(NSData *responseData, NSError *error) {
-    
     
     if(responseData == nil) {
       dispatch_async(dispatch_get_main_queue(), ^{
