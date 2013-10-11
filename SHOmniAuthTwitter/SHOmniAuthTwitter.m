@@ -95,7 +95,11 @@
                                                         }];
                                                     }
                                                     else {
-                                                        completionBlock(nil, responseObject, nil, YES);
+                                                        // Convert responseObject to string and dictionary from OAuth response
+                                                        NSString *responseString = [responseObject isKindOfClass:[NSData class]] ? [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding] : nil;
+                                                        NSDictionary *response = responseString ? [NSURL ab_parseURLQueryString: responseString] : @{};
+                                                        
+                                                        completionBlock(nil, response, nil, YES);
                                                     }
                                                  } failure:^(NSError *error) {
                                                    completionBlock(nil, nil, error, NO);
