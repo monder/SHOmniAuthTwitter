@@ -124,8 +124,8 @@
     if(responseData == nil) {
       dispatch_async(dispatch_get_main_queue(), ^{
         completionBlock((id<account>)theAccount, nil, error, NO);
-        return;
       });
+      return;
     }
     
     NSString *responseStr = [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding];
@@ -147,8 +147,8 @@
       if(responseData == nil) {
         dispatch_async(dispatch_get_main_queue(), ^{
           completionBlock((id<account>)theAccount, nil, error, NO);
-          return;
         });
+        return;
       }
       
       NSDictionary * responseUser =  [NSJSONSerialization
