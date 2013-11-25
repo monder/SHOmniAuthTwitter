@@ -14,16 +14,18 @@
 #import "OAuthCore.h"
 #import "OAuth+Additions.h"
 
-#import "AFOAuth1Client.h"
+#import "BDBOAuth1RequestOperationManager.h"
+#import "NSDictionary+BDBOAuth1Manager.h"
 
 #import <Accounts/Accounts.h>
 
 #define NSNullIfNil(v) (v ? v : [NSNull null])
 
+static BDBOAuth1RequestOperationManager *twitterRequestOperationManager;
+static SHOmniAuthAccountResponseHandler _completionBlock;
 
 @interface SHOmniAuthTwitter ()
 +(NSMutableDictionary *)authHashWithResponse:(NSDictionary *)theResponse;
-
 @end
 
 
@@ -63,47 +65,66 @@
 
 +(void)performLoginForNewAccount:(SHOmniAuthAccountResponseHandler)completionBlock granted: (BOOL) granted {
   
-  
-  
-  
-  AFOAuth1Client *  twitterClient = [[AFOAuth1Client alloc]
-                                     initWithBaseURL:[NSURL URLWithString:@"https://api.twitter.com/"]
-                                     key:[SHOmniAuth providerValue:SHOmniAuthProviderValueKey forProvider:self.provider]
-                                     secret:[SHOmniAuth providerValue:SHOmniAuthProviderValueSecret forProvider:self.provider]];
-  
-  [twitterClient authorizeUsingOAuthWithRequestTokenPath:@"oauth/request_token"
-                                   userAuthorizationPath:@"oauth/authorize"
-                                             callbackURL:[NSURL
-                                                          URLWithString:[SHOmniAuth
-                                                                         providerValue:SHOmniAuthProviderValueCallbackUrl
-                                                                         forProvider:self.provider]]
-                                         accessTokenPath:@"oauth/access_token"
-                                            accessMethod:@"POST"
-                                                   scope:[SHOmniAuth
-                                                          providerValue:SHOmniAuthProviderValueScope
-                                                          forProvider:self.provider]
-                                                success:^(AFOAuth1Token *accessToken, id responseObject) {
-                                                    if (granted) {
-                                                        [self saveTwitterAccountWithToken:accessToken.key andSecret:accessToken.secret
-                                                        withCompletionHandler:^(ACAccount *account, NSError *error) {
-                                                            if(account) {
-                                                                [self performReverseAuthForAccount:account withBlock:completionBlock];
-                                                            }
-                                                            else {
-                                                                completionBlock(nil, nil, error, NO);
-                                                            }
-                                                        }];
-                                                    }
-                                                    else {
-                                                        // Convert responseObject to string and dictionary from OAuth response
-                                                        NSString *responseString = [responseObject isKindOfClass:[NSData class]] ? [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding] : nil;
-                                                        NSDictionary *response = responseString ? [NSURL ab_parseURLQueryString: responseString] : @{};
-                                                        
-                                                        completionBlock(nil, response, nil, YES);
-                                                    }
-                                                 } failure:^(NSError *error) {
-                                                   completionBlock(nil, nil, error, NO);
-                                                 }];
+  twitterRequestOperationManager =
+    [[BDBOAuth1RequestOperationManager alloc] initWithBaseURL:[NSURL URLWithString:@"https://api.twitter.com/"]
+                                                  consumerKey:[SHOmniAuth providerValue:SHOmniAuthProviderValueKey forProvider:self.provider]
+                                               consumerSecret:[SHOmniAuth providerValue:SHOmniAuthProviderValueSecret forProvider:self.provider]];
+    
+    [twitterRequestOperationManager fetchRequestTokenWithPath:@"oauth/request_token"
+                                                       method:@"POST"
+                                                  callbackURL:[NSURL
+                                                               URLWithString:[SHOmniAuth
+                                                                              providerValue:SHOmniAuthProviderValueCallbackUrl
+                                                                              forProvider:self.provider]]
+                                                        scope:[SHOmniAuth
+                                                               providerValue:SHOmniAuthProviderValueScope
+                                                               forProvider:self.provider]
+                                                      success:^(BDBOAuthToken *requestToken) {
+                                                          _completionBlock = [completionBlock copy];
+                                                          NSString *authURL = [NSString stringWithFormat:@"https://api.twitter.com/oauth/authorize?oauth_token=%@", requestToken.token];
+                                                          [[UIApplication sharedApplication] openURL:[NSURL URLWithString:authURL]];
+                                                      }
+                                                      failure:^(NSError *error) {
+                                                          completionBlock(nil, nil, error, NO);
+                                                      }];
+}
+
++ (BOOL)handlesOpenUrl:(NSURL *)theUrl
+{
+    NSURL *url = [NSURL
+                  URLWithString:[SHOmniAuth
+                                 providerValue:SHOmniAuthProviderValueCallbackUrl
+                                 forProvider:self.provider]];
+    if ([theUrl.scheme isEqualToString:url.scheme] && [theUrl.host isEqualToString:url.host]) {
+        NSDictionary *parameters = [NSDictionary dictionaryFromQueryString:theUrl.query];
+        if (parameters[@"oauth_token"] && parameters[@"oauth_verifier"])
+            [twitterRequestOperationManager fetchAccessTokenWithPath:@"/oauth/access_token"
+                                                   method:@"POST"
+                                             requestToken:[BDBOAuthToken tokenWithQueryString:theUrl.query]
+                                                  success:^(BDBOAuthToken *accessToken) {
+                                                          [self saveTwitterAccountWithToken:accessToken.token andSecret:accessToken.secret
+                                                                      withCompletionHandler:^(ACAccount *account, NSError *error) {
+                                                                          if(account) {
+                                                                              [self performReverseAuthForAccount:account withBlock:_completionBlock];
+                                                                          } else {
+                                                                              _completionBlock(nil, nil, error, NO);
+                                                                          }
+                                                                          _completionBlock = nil;
+                                                                      }];
+                                                  }
+                                                  failure:^(NSError *error) {
+                                                      NSLog(@"Error: %@", error.localizedDescription);
+                                                      dispatch_async(dispatch_get_main_queue(), ^{
+                                                          [[[UIAlertView alloc] initWithTitle:@"Error"
+                                                                                      message:@"Could not acquire OAuth access token. Please try again later."
+                                                                                     delegate:self
+                                                                            cancelButtonTitle:@"Dismiss"
+                                                                            otherButtonTitles:nil] show];
+                                                      });
+                                                  }];
+        return YES;
+    }
+    return NO;
 }
 
 +(BOOL)hasLocalAccountOnDevice; {

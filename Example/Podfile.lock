@@ -1,23 +1,32 @@
 PODS:
-  - AFNetworking (1.3.1)
-  - AFOAuth1Client (0.2.1):
-    - AFNetworking (>= 1.0)
-  - BlocksKit (1.8.2):
+  - AFNetworking/NSURLConnection (2.0.3):
+    - AFNetworking/Reachability
+    - AFNetworking/Security
+    - AFNetworking/Serialization
+  - AFNetworking/NSURLSession (2.0.3):
+    - AFNetworking/NSURLConnection
+  - AFNetworking/Reachability (2.0.3)
+  - AFNetworking/Security (2.0.3)
+  - AFNetworking/Serialization (2.0.3)
+  - BDBOAuth1Manager (1.0.1):
+    - AFNetworking/NSURLConnection (~> 2.0.0)
+    - AFNetworking/NSURLSession (~> 2.0.0)
+  - BlocksKit (1.8.3):
     - libffi
   - libffi (3.0.13)
-  - LUKeychainAccess (1.0.1)
+  - LUKeychainAccess (1.2.0)
   - NSData+Base64 (1.0.0)
   - OAuthCore (0.0.1):
     - NSData+Base64
-  - SHOmniAuth (0.2.1):
+  - SHOmniAuth (0.2.2):
     - LUKeychainAccess
-  - SHOmniAuthTwitter (0.2.8):
-    - AFOAuth1Client (~> 0.2.0)
+  - SHOmniAuthTwitter (0.2.9):
+    - BDBOAuth1Manager
     - SHOmniAuth (~> 0.2.0)
     - TWReverseAuth (~> 0.1.0)
-  - TWReverseAuth (0.1.0):
-    - LUKeychainAccess (~> 1.0.1)
-    - OAuthCore (~> 0.0.1)
+  - TWReverseAuth (0.1.1):
+    - LUKeychainAccess
+    - OAuthCore
 
 DEPENDENCIES:
   - BlocksKit
@@ -28,15 +37,15 @@ EXTERNAL SOURCES:
     :path: ../
 
 SPEC CHECKSUMS:
-  AFNetworking: 9ec8aafb9269236a7630bd8d9838ce2ba30fa2a0
-  AFOAuth1Client: 643eee4f1becc38dcd9afb30bc067a4d9b60699c
-  BlocksKit: 7396526b0816734103f6133fbb1a520c8b04e80c
+  AFNetworking: e499052cbf3d743e9bb727bb37adb9dc2547ba15
+  BDBOAuth1Manager: 5f7b7acf392331714e9776c3a07f9a5900a6837d
+  BlocksKit: 27257f9cbbec0ea98c80ba83cc2ea7111ae62eb2
   libffi: 64ef39353e747bb2b25e1026afd96a157bf9231c
-  LUKeychainAccess: 6ba22b2e1eec24f9f2fc9c6a9087d5524a58b1a2
-  NSData+Base64: 36c4e5b6479259c1a68866ccd2a8dd385c9744f7
+  LUKeychainAccess: 87c5398528278a5f24956b61bb459ea97bd93b6a
+  NSData+Base64: 4819562faee4544e3cf5703f2139820b09732b28
   OAuthCore: 4164eec5e28c68f794953446e68f91054ffe570c
-  SHOmniAuth: 7274fc4ffa0fbc371e70b668247294a3616a8bfd
-  SHOmniAuthTwitter: 05664daa0bc01cd722d7df2b959aab7503e12d52
-  TWReverseAuth: d0e6e2d534377f1832c2553ff4e9d677d549e45a
+  SHOmniAuth: 34a069fff1680c5867730fb013c215aa2057564b
+  SHOmniAuthTwitter: eecbb1adc67c53a3b015d7e4901cc969430460d5
+  TWReverseAuth: 78bb1967ab441b27f6dfd8e6dde609fd4778eaa1
 
-COCOAPODS: 0.20.2
+COCOAPODS: 0.28.0

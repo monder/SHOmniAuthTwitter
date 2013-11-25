@@ -9,7 +9,8 @@
 #import "SHAppDelegate.h"
 #import "SHOmniAuth.h"
 #import "SHOmniAuthTWitter.h"
-#import "AFOAuth1Client.h"
+#import <BDBOAuth1Manager/BDBOAuth1RequestOperationManager.h>
+
 @implementation SHAppDelegate
 
 -(BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions; {
@@ -26,10 +27,7 @@
  sourceApplication:(NSString *)sourceApplication
         annotation:(id)annotation; {
   
-
-  NSNotification *notification = [NSNotification notificationWithName:kAFApplicationLaunchedWithURLNotification object:nil userInfo:[NSDictionary dictionaryWithObject:url forKey:kAFApplicationLaunchOptionsURLKey]];
-  [[NSNotificationCenter defaultCenter] postNotification:notification];
-  
+    [SHOmniAuthTwitter handlesOpenUrl:url];
   
   return YES;
 }
